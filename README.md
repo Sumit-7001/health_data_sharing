@@ -83,3 +83,5 @@ module health_data_sharing::consent_manager {
         table::remove(&mut user_consents.consents, consent_id);
     }
 }
+0xd7b94a86e0bce19c1336aa6eabb9150277d779e6e51ec33de7a3f354d0dc8d16
+
