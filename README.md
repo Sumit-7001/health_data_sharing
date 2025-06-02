@@ -1,87 +1,27 @@
-module health_data_sharing::consent_manager {
-    use std::string::String;
-    use std::signer;
-    use aptos_std::table::{Self, Table};
-    
-    /// Represents consent for a specific data type
-    struct Consent has store, drop {
-        /// Who the data is shared with (recipient address)
-        recipient: address,
-        /// Type of health data being shared (e.g., "medications", "vitals", "lab_results")
-        data_type: String,
-        /// Whether consent is currently active
-        is_active: bool,
-        /// Optional expiration timestamp
-        expiration_time: u64
-    }
-    
-    /// Resource stored under a user's account
-    struct UserConsents has key {
-        /// Mapping from consent_id to Consent
-        consents: Table<u64, Consent>,
-        /// Counter for generating unique consent IDs
-        next_consent_id: u64
-    }
-    
-    /// Error codes
-    const E_NOT_AUTHORIZED: u64 = 1;
-    const E_CONSENT_NOT_FOUND: u64 = 2;
-    const E_CONSENT_EXPIRED: u64 = 3;
-    
-    /// Initialize user's consent storage
-    public entry fun initialize(account: &signer) {
-        let user_addr = signer::address_of(account);
-        if (!exists<UserConsents>(user_addr)) {
-            move_to(account, UserConsents {
-                consents: table::new(),
-                next_consent_id: 0
-            });
-        }
-    }
-    
-    /// Grant consent to share specific health data with a recipient
-    public entry fun grant_consent(
-        account: &signer,
-        recipient: address,
-        data_type: String,
-        expiration_time: u64
-    ) acquires UserConsents {
-        let user_addr = signer::address_of(account);
-        
-        // Get or initialize user's consent storage
-        if (!exists<UserConsents>(user_addr)) {
-            initialize(account);
-        };
-        
-        let user_consents = borrow_global_mut<UserConsents>(user_addr);
-        let consent_id = user_consents.next_consent_id;
-        
-        // Create and store new consent
-        table::add(&mut user_consents.consents, consent_id, Consent {
-            recipient,
-            data_type,
-            is_active: true,
-            expiration_time
-        });
-        
-        // Increment consent ID counter
-        user_consents.next_consent_id = consent_id + 1;
-    }
-    
-    /// Revoke previously granted consent
-    public entry fun revoke_consent(
-        account: &signer,
-        consent_id: u64
-    ) acquires UserConsents {
-        let user_addr = signer::address_of(account);
-        assert!(exists<UserConsents>(user_addr), E_NOT_AUTHORIZED);
-        
-        let user_consents = borrow_global_mut<UserConsents>(user_addr);
-        assert!(table::contains(&user_consents.consents, consent_id), E_CONSENT_NOT_FOUND);
-        
-        // Simply remove the consent entry
-        table::remove(&mut user_consents.consents, consent_id);
-    }
-}
-0xd7b94a86e0bce19c1336aa6eabb9150277d779e6e51ec33de7a3f354d0dc8d16
+
+# Health Data Sharing Consent Manager
+
+## Description
+
+The **Health Data Sharing Consent Manager** is a Move smart contract module designed for managing user consent over the sharing of personal health data on the Aptos blockchain. It empowers users to selectively and securely grant or revoke access to specific health information, ensuring user control, transparency, and data protection.
+
+## Vision
+
+Our vision is to create a **decentralized health data ecosystem** where individuals have complete ownership and control over their personal health records. This module lays the foundation for a user-centric healthcare system by enabling secure, consent-based data sharing among patients, healthcare providers, insurers, and researchers.
+
+## Future Scope
+
+The current version supports basic consent granting and revocation. Future enhancements may include:
+
+* **Fine-grained access controls** (e.g., time-limited, use-case-specific sharing).
+* **Consent history/auditing logs** for transparency and traceability.
+* **Integration with decentralized identity (DID) systems**.
+* **Cross-chain interoperability** for broader data sharing.
+* **Role-based permissions** for healthcare institutions and applications.
+* **Encrypted data links** associated with each consent.
+
+## Contract Address
+
+0xd07ce7e8af1b45194b6a59409e8628041ba5340ae6ead36f211c69addcb591cb
+
 
